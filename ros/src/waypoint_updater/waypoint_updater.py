@@ -26,7 +26,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 
 LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
 MAX_DECEL = 0.5
-
+LOOKAHEAD_WPS_MASK = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 16, 20, 28, 36, 52, 68, 100, 132, 196]
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -98,25 +98,40 @@ class WaypointUpdater(object):
         base_waypoints = self.base_lane.waypoints[closest_idx:farthest_idx]
 
         if self.stopline_wp_idx == -1 or self.stopline_wp_idx >= farthest_idx or self.stopline_wp_idx < closest_idx + 1:
-            lane.waypoints = base_waypoints
+            lane.waypoints = self.regular_waypoints(closest_idx, farthest_idx)
         else:
-            lane.waypoints = self.decelerate_waypoints(base_waypoints, closest_idx)
+            lane.waypoints = self.decelerate_waypoints(base_waypoints, closest_idx, farthest_idx)
 
         return lane
 
-    def decelerate_waypoints(self, waypoints, closest_idx):
-        temp =[]
-        for i, wp in enumerate(waypoints):
-            p = Waypoint()
-            p.pose = wp.pose
+    def regular_waypoints(self, closest_idx, farthest_idx):
+        final_waypoints = []
 
-            stop_idx = max(self.stopline_wp_idx - closest_idx - 4, 0)
-            dist = self.distance(waypoints, i, stop_idx)
-            vel = math.sqrt(2 * MAX_DECEL * dist)
-            if vel < 1.0:
-                vel = 0.0
-            p.twist.twist.linear.x = min(vel, wp.twist.twist.linear.x)
-            temp.append(p)
+        for i in LOOKAHEAD_WPS_MASK:
+            idx = closest_idx + i
+            if idx < farthest_idx:
+                wp = self.base_lane.waypoints[idx]
+                final_waypoints.append(wp)
+
+        return final_waypoints
+
+    def decelerate_waypoints(self, waypoints, closest_idx, farthest_idx):
+        temp =[]
+        stop_idx = max(self.stopline_wp_idx - closest_idx - 4, 0)
+
+        for i in LOOKAHEAD_WPS_MASK:
+            idx = closest_idx + i
+            if idx < stop_idx:
+                for i, wp in enumerate(waypoints[closest_idx, idx]):
+                    p = Waypoint()
+                    p.pose = wp.pose
+
+                    dist = self.distance(waypoints, i, stop_idx)
+                    vel = math.sqrt(2 * MAX_DECEL * dist)
+                    if vel < 1.0:
+                        vel = 0.0
+                    p.twist.twist.linear.x = min(vel, wp.twist.twist.linear.x)
+                    temp.append(p)
 
         return temp
 
