@@ -11,26 +11,27 @@ class Controller(object):
     def __init__(self, vehicle_mass, fuel_capacity, brake_deadband, decel_limit,
                  accel_limit, wheel_radius, wheel_base, steer_ratio, max_lat_accel, max_steer_angel):
 
-        self.yaw_controller = YawController(wheel_base, steer_ratio, 0.1,max_lat_accel, max_steer_angel)
-
-        kp = 0.3
-        ki = 0.05
-        kd = 0.0
-        mn =0.0
-        mx = 0.2
-        self.throttle_controller = PID(kp, ki, kd, mn, mx)
-
-        tau = 0.5
-        ts = 0.02
-        self.vel_lpf = LowPassFilter(tau, ts)
-
         self.vehicle_mass = vehicle_mass
         self.fuel_capacity = fuel_capacity
         self.brake_deadband = brake_deadband
         self.decel_limit = decel_limit
         self.accel_limit = accel_limit
         self.wheel_radius = wheel_radius
-        self.total_vehicle_mass = self.vehicle_mass + self.fuel_capacity / GAS_DENSITY
+        self.total_vehicle_mass = self.vehicle_mass + self.fuel_capacity * GAS_DENSITY
+
+        self.yaw_controller = YawController(wheel_base, steer_ratio, 0.1, max_lat_accel, max_steer_angel)
+
+        kp = 0.8
+        ki = 0.0001
+        kd = 0.01
+        mn = self.decel_limit
+        mx = self.accel_limit
+        self.throttle_controller = PID(kp, ki, kd, mn, mx)
+
+        tau = 0.5
+        ts = 0.02
+        self.throttle_lpf = LowPassFilter(tau, ts)
+        self.steering_lpf = LowPassFilter(tau, ts)
 
         self.last_time =rospy.get_time()
 
@@ -42,6 +43,8 @@ class Controller(object):
             return 0.0, 0.0, 0.0
 
         steering = self.yaw_controller.get_steering(linear_vel, angular_vel, current_vel)
+        steering = self.steering_lpf.filt(steering)
+
         vel_error = linear_vel - current_vel
         self.last_vel = current_vel
 
@@ -49,6 +52,7 @@ class Controller(object):
         sample_time = current_time - self.last_time
         self.last_time = current_time
         throttle = self.throttle_controller.step(vel_error, sample_time)
+        throttle = self.throttle_lpf(throttle)
         brake = 0
 
         if linear_vel == 0.0 and current_vel < 0.1:
