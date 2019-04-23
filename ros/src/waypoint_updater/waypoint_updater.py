@@ -119,10 +119,10 @@ class WaypointUpdater(object):
         temp =[]
         stop_idx = max(self.stopline_wp_idx - closest_idx - 4, 0)
 
-        for i in LOOKAHEAD_WPS_MASK:
-            idx = closest_idx + i
-            if idx < stop_idx:
-                for i, wp in enumerate(waypoints[closest_idx, idx]):
+        for j in LOOKAHEAD_WPS_MASK:
+            idx = closest_idx + j
+            if idx < stop_idx + closest_idx + 1:
+                for i, wp in enumerate(waypoints[closest_idx,idx]):
                     p = Waypoint()
                     p.pose = wp.pose
 
