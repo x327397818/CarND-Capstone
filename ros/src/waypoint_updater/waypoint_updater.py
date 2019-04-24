@@ -25,10 +25,8 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 LOOKAHEAD_WPS = 200
-LOOKAHEAD_WPS1 = 20
-LOOKAHEAD_WPS2 = 120
 MAX_DECEL = 0.5
-LOOKAHEAD_WPS_MASK = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 16, 20, 28, 36, 52, 68, 100, 132, 196]
+LOOKAHEAD_WPS_MASK = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 15, 20, 25, 30, 40, 50, 60, 80, 100, 120, 160, 196]
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -169,14 +167,28 @@ class WaypointUpdater(object):
     def distance(self, waypoints, wp1, wp2):
         dist = 0
         dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2 + (a.z-b.z)**2)
+        dist = dl(waypoints[wp1].pose.pose.position, waypoints[wp2].pose.pose.position)
+        """
+        for i in range(wp1, wp2 + 1, 40):
+            dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
+            wp1 = i
 
-        for i in range(wp1, wp2 + 1, 3):
+        for i in range(wp1, wp2 + 1, 20):
+            dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
+            wp1 = i
+
+        for i in range(wp1, wp2 + 1, 10):
+            dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
+            wp1 = i
+
+        for i in range(wp1, wp2 + 1, 5):
             dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
             wp1 = i
 
         for i in range(wp1+1, wp2+1):
             dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
             wp1 = i
+        """
         return dist
 
 
