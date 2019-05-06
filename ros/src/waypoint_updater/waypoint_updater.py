@@ -26,7 +26,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 
 LOOKAHEAD_WPS = 200
 MAX_DECEL = 0.5
-LOOKAHEAD_WPS_MASK = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 15, 20, 25, 30, 40, 50, 60, 80, 100, 120, 160, 196]
+LOOKAHEAD_WPS_MASK = [0, 1, 2, 3, 4, 5, 10, 15, 20, 30, 50, 70, 110, 150, 196]#[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 15, 20, 25, 30, 40, 50, 60, 80, 100, 120, 160, 196]
 
 class WaypointUpdater(object):
     def __init__(self):
