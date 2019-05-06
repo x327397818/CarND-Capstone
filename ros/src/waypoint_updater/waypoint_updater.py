@@ -116,10 +116,11 @@ class WaypointUpdater(object):
         return final_waypoints
 
     def decelerate_waypoints(self, waypoints, closest_idx, farthest_idx):
-        temp =[]
+        temp = []
         stop_idx = max(self.stopline_wp_idx - closest_idx - 4, 0)
+        dist = 0.0
 
-        for i in LOOKAHEAD_WPS_MASK:
+        for i in LOOKAHEAD_WPS_MASK[::-1]:
             if closest_idx + i < farthest_idx:
                 wp = waypoints[i]
                 p = Waypoint()
@@ -127,13 +128,13 @@ class WaypointUpdater(object):
                 vel = 0.0
 
                 if i < stop_idx + 1:
-                    dist = self.distance(waypoints, i, stop_idx)
+                    dist += self.distance(waypoints, i, stop_idx)
                     vel = math.sqrt(2 * MAX_DECEL * dist)
-                    if vel < 1.0:
+                    if vel < 0.3:
                         vel = 0.0
 
                 p.twist.twist.linear.x = min(vel, wp.twist.twist.linear.x)
-                temp.append(p)
+                temp.insert(0,p)
 
         return temp
 
