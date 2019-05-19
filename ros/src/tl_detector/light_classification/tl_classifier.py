@@ -51,6 +51,7 @@ class TLClassifier(object):
         with self.frozen_graph.as_default():
             graph_definition = tf.GraphDef()
             with tf.gfile.GFile(self.frozen_graph_path, 'rb') as fid:
+                print('load frozen graph')
                 graph_definition.ParseFromString(fid.read())
                 tf.import_graph_def(graph_definition, name='')
             self.image_tensor = self.frozen_graph.get_tensor_by_name('image_tensor:0')
@@ -71,7 +72,8 @@ class TLClassifier(object):
                 feed_dict={self.image_tensor: np.expand_dims(image, axis=0)})
         scores = np.squeeze(scores)
         classes = np.squeeze(classes)
-
+        print('scores: ', scores[0])
+        print('classes: ', classes[0])
         if scores[0] > __SCORE_THRESH__:
             if classes[0] == 1:
                 print("traffic light: green")
