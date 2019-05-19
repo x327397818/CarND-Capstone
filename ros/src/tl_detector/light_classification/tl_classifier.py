@@ -74,10 +74,15 @@ class TLClassifier(object):
 
         if scores[0] > __SCORE_THRESH__:
             if classes[0] == 1:
+                print("traffic light: green")
                 return TrafficLight.GREEN
+
             elif classes[0] == 2:
+                print("traffic light: red")
                 return TrafficLight.RED
+
             elif classes[0] == 3:
+                print("traffic light: yellow")
                 return TrafficLight.YELLOW
 
         return TrafficLight.UNKNOWN
