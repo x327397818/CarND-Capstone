@@ -25,6 +25,7 @@ class TLDetector(object):
         self.lights = []
         self.waypoints_2d = None
         self.waypoint_tree = None
+        self.image_count = 0
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -79,28 +80,30 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
-		number = 0
-        if number%4 == 0:
-	        self.has_image = True
-	        self.camera_image = msg
+        # Only process image for every 3 images
+        if self.image_count == 3:
+            self.image_count = 0
 
-	        light_wp, state = self.process_traffic_lights()
+        if self.image_count == 0:
+            self.has_image = True
+            self.camera_image = msg
 
+            light_wp, state = self.process_traffic_lights()
 
-	        if self.state != state:
-	            self.state_count = 0
-	            self.state = state
-	        elif self.state_count >= STATE_COUNT_THRESHOLD:
-	            self.last_state = self.state
-	            light_wp = light_wp if state == TrafficLight.RED else -1
-	            self.last_wp = light_wp
-	            self.upcoming_red_light_pub.publish(Int32(light_wp))
-	        else:
-	            self.upcoming_red_light_pub.publish(Int32(self.last_wp))
-	        self.state_count += 1
-        number +=1
-        if number == 4:
-            number == 0
+            if self.state != state:
+                self.state_count = 0
+                self.state = state
+            elif self.state_count >= STATE_COUNT_THRESHOLD:
+                self.last_state = self.state
+                light_wp = light_wp if state == TrafficLight.RED else -1
+                self.last_wp = light_wp
+                self.upcoming_red_light_pub.publish(Int32(light_wp))
+            else:
+                self.upcoming_red_light_pub.publish(Int32(self.last_wp))
+            self.state_count += 1
+
+        self.image_count += 1
+
     def get_closest_waypoint(self, x, y):
         """Identifies the closest path waypoint to the given position
             https://en.wikipedia.org/wiki/Closest_pair_of_points_problem
