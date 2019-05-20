@@ -72,8 +72,6 @@ class TLClassifier(object):
                 feed_dict={self.image_tensor: np.expand_dims(image, axis=0)})
         scores = np.squeeze(scores)
         classes = np.squeeze(classes)
-        print('scores: ', scores[0])
-        print('classes: ', classes[0])
         if scores[0] > __SCORE_THRESH__:
             if classes[0] == 1:
                 print("traffic light: green")
@@ -86,5 +84,5 @@ class TLClassifier(object):
             elif classes[0] == 3:
                 print("traffic light: yellow")
                 return TrafficLight.YELLOW
-
+        print("traffic light: unknown")
         return TrafficLight.UNKNOWN
