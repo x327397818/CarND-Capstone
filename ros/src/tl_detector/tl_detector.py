@@ -80,13 +80,13 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
+        self.has_image = True
+        self.camera_image = msg
         # Only process image for every 3 images
         if self.image_count == 3:
             self.image_count = 0
 
         if self.image_count == 0:
-            self.has_image = True
-            self.camera_image = msg
 
             light_wp, state = self.process_traffic_lights()
 
