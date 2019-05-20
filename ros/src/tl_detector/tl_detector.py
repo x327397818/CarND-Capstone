@@ -13,7 +13,7 @@ import cv2
 import yaml
 import math
 
-STATE_COUNT_THRESHOLD = 3
+STATE_COUNT_THRESHOLD = 2
 
 class TLDetector(object):
     def __init__(self):
@@ -84,7 +84,7 @@ class TLDetector(object):
         self.has_image = True
         self.camera_image = msg
         # Only process image for every 3 images
-        if self.image_count == 3:
+        if self.image_count == 2:
             self.image_count = 0
 
         if self.image_count == 0:
