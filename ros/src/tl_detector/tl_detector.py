@@ -11,9 +11,8 @@ from light_classification.tl_classifier import TLClassifier
 import tf
 import cv2
 import yaml
-import math
 
-STATE_COUNT_THRESHOLD = 2
+STATE_COUNT_THRESHOLD = 3
 
 class TLDetector(object):
     def __init__(self):
@@ -47,7 +46,7 @@ class TLDetector(object):
         print('Is software running for site: {}'.format(is_site))
         self.bridge = CvBridge()
         self.light_classifier = TLClassifier(is_site)
-        #self.listener = tf.TransformListener()
+        self.listener = tf.TransformListener()
 
         sub3 = rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb)
         sub6 = rospy.Subscriber('/image_color', Image, self.image_cb)
@@ -80,27 +79,28 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
-        self.has_image = True
-        self.camera_image = msg
-        number = 0
-        if number%3 == 0:
-            light_wp, state = self.process_traffic_lights()
+		number = 0
+        if number%4 == 0:
+	        self.has_image = True
+	        self.camera_image = msg
+
+	        light_wp, state = self.process_traffic_lights()
+
+
+	        if self.state != state:
+	            self.state_count = 0
+	            self.state = state
+	        elif self.state_count >= STATE_COUNT_THRESHOLD:
+	            self.last_state = self.state
+	            light_wp = light_wp if state == TrafficLight.RED else -1
+	            self.last_wp = light_wp
+	            self.upcoming_red_light_pub.publish(Int32(light_wp))
+	        else:
+	            self.upcoming_red_light_pub.publish(Int32(self.last_wp))
+	        self.state_count += 1
         number +=1
-        if number == 3:
+        if number == 4:
             number == 0
-
-        if self.state != state:
-            self.state_count = 0
-            self.state = state
-        elif self.state_count >= STATE_COUNT_THRESHOLD:
-            self.last_state = self.state
-            light_wp = light_wp if state != TrafficLight.GREEN else -1
-            self.last_wp = light_wp
-            self.upcoming_red_light_pub.publish(Int32(light_wp))
-        else:
-            self.upcoming_red_light_pub.publish(Int32(self.last_wp))
-        self.state_count += 1
-
     def get_closest_waypoint(self, x, y):
         """Identifies the closest path waypoint to the given position
             https://en.wikipedia.org/wiki/Closest_pair_of_points_problem
@@ -168,7 +168,7 @@ class TLDetector(object):
         if closest_light:
             dl = lambda a, b: math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2)
             dist_light = dl(self.pose.pose.position, closest_light.pose.pose.position)
-            if dist_light > 100.0:
+            if dist_light > 150.0:
                 return -1, TrafficLight.UNKNOWN
             state = self.get_light_state(closest_light)
             return line_wp_idx, state
